@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Application Scorecard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --ink-soft:#3B4863;
+    --paper:#FAF9F6;
+    --paper-dim:#F1EFE9;
+    --card:#FFFFFF;
+    --line:#E4E0D6;
+    --good:#0F7B5F;
+    --good-bg:#E8F4EF;
+    --warn:#B8791A;
+    --warn-bg:#FBF1E1;
+    --bad:#B23A2F;
+    --bad-bg:#FBEAE7;
+    --accent:#14213D;
+    --radius:16px;
+    --radius-sm:10px;
+    --shadow:0 1px 2px rgba(20,33,61,0.04), 0 8px 24px rgba(20,33,61,0.06);
+    --shadow-lg:0 4px 12px rgba(20,33,61,0.06), 0 20px 48px rgba(20,33,61,0.10);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .serif{ font-family:'Source Serif 4', Georgia, serif; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .wrap{
+    max-width:880px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    padding:20px 0;
+  }
+  .topbar .wrap{ max-width:960px; display:flex; align-items:center; justify-content:space-between; }
+  .brandmark{ display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:-0.01em; }
+  .brandmark .dot{ width:9px; height:9px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px var(--good-bg); }
+  .brandmark span{ font-size:15px; }
+
+  /* ---------- Screens ---------- */
+  .screen{ display:none; animation:fadein .3s ease; }
+  .screen.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- Hero / Input screen ---------- */
+  .hero{ max-width:760px; margin:0 auto; padding:56px 24px 8px; text-align:center; }
+  .hero h1{
+    font-family:'Source Serif 4', Georgia, serif;
+    font-size:clamp(32px, 5vw, 46px);
+    font-weight:600;
+    letter-spacing:-0.01em;
+    margin:0 0 14px;
+    color:var(--ink);
+  }
+  .hero p{
+    font-size:17px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:28px;
+  }
+
+  .input-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin:36px 0 0;
+  }
+  @media (max-width:760px){ .input-grid{ grid-template-columns:1fr; } }
+
+  .field-label{
+    display:flex; align-items:baseline; gap:8px;
+    font-weight:700; font-size:14.5px; margin-bottom:4px; color:var(--ink);
+  }
+  .field-label .step{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--ink); color:#fff; font-size:11px; font-weight:700;
+    flex-shrink:0;
+  }
+  .field-help{ font-size:12.5px; color:#7A8299; margin:0 0 10px 28px; }
+
+  textarea{
+    width:100%;
+    min-height:220px;
+    resize:vertical;
+    border:1.5px solid var(--line);
+    border-radius:var(--radius-sm);
+    padding:14px 16px;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+    background:#FDFCFA;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  textarea:focus{
+    outline:none;
+    border-color:var(--ink);
+    box-shadow:0 0 0 3px rgba(20,33,61,0.08);
+    background:#fff;
+  }
+  textarea::placeholder{ color:#B3B8C4; }
+
+  .char-count{ font-size:11.5px; color:#9AA0AF; text-align:right; margin-top:6px; }
+  .field-error{
+    font-size:12.5px; color:var(--bad); margin-top:6px; margin-left:28px;
+    display:none;
+  }
+  .field-error.show{ display:block; }
+
+  .privacy-note{
+    display:flex; align-items:flex-start; gap:8px;
+    font-size:12.5px; color:#8A8F9C;
+    margin:22px 0 0;
+    padding:12px 14px;
+    background:var(--paper-dim);
+    border-radius:var(--radius-sm);
+  }
+  .privacy-note svg{ flex-shrink:0; margin-top:1px; }
+
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:15.5px;
+    border-radius:12px;
+    padding:16px 28px;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .15s ease, background .15s ease;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn-primary{
+    background:var(--ink); color:#fff;
+    width:100%;
+    box-shadow:0 2px 0 rgba(20,33,61,0.15);
+  }
+  .btn-primary:hover:not(:disabled){ background:#1E2E52; }
+  .btn-primary:disabled{ background:#D6D3C8; color:#9C998E; cursor:not-allowed; box-shadow:none; }
+
+  .btn-ghost{
+    background:transparent; color:var(--ink-soft); border:1.5px solid var(--line);
+  }
+  .btn-ghost:hover{ border-color:var(--ink); color:var(--ink); }
+
+  .submit-row{ margin-top:28px; }
+
+  /* ---------- Payment screen ---------- */
+  .pay-screen{ max-width:480px; margin:64px auto; }
+  .pay-card{
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    box-shadow:var(--shadow-lg); padding:40px 36px; text-align:center;
+  }
+  .pay-eyebrow{ font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--good); margin-bottom:10px; }
+  .pay-card h2{
+    font-family:'Source Serif 4', serif; font-size:27px; font-weight:600; margin:0 0 6px;
+  }
+  .price-tag{
+    font-family:'Source Serif 4', serif;
+    font-size:52px; font-weight:600; margin:18px 0 2px; color:var(--ink);
+  }
+  .price-tag sup{ font-size:22px; top:-1.6em; font-weight:600; }
+  .price-sub{ font-size:13px; color:#8A8F9C; margin:0 0 26px; }
+
+  .feature-list{ list-style:none; margin:0 0 28px; padding:0; text-align:left; display:flex; flex-direction:column; gap:11px; }
+  .feature-list li{ display:flex; align-items:flex-start; gap:10px; font-size:14.5px; color:var(--ink-soft); }
+  .feature-list svg{ flex-shrink:0; margin-top:2px; }
+
+  .pay-footnote{ font-size:11.5px; color:#A0A5B0; margin-top:16px; }
+
+  .spinner{
+    width:16px; height:16px; border-radius:50%;
+    border:2px solid rgba(255,255,255,0.35); border-top-color:#fff;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ---------- Results screen ---------- */
+  .results{ padding:44px 0 80px; }
+
+  .score-hero{
+    background:var(--card); border:1px solid var(--line); border-radius:24px;
+    box-shadow:var(--shadow-lg);
+    padding:44px 32px 36px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .score-hero .eyebrow{
+    font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+    color:#9AA0AF; margin-bottom:22px;
+  }
+  .score-ring-wrap{ position:relative; width:220px; height:220px; margin:0 auto; }
+  .score-ring-wrap svg{ transform:rotate(-90deg); width:220px; height:220px; }
+  .ring-bg{ fill:none; stroke:var(--paper-dim); stroke-width:12; }
+  .ring-fg{ fill:none; stroke-width:12; stroke-linecap:round; transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1); }
+  .score-num-wrap{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .score-num{ font-family:'Source Serif 4', serif; font-size:56px; font-weight:700; line-height:1; color:var(--ink); }
+  .score-denom{ font-size:14px; color:#9AA0AF; font-weight:600; margin-top:2px; }
+
+  .rating-badge{
+    display:inline-block; margin-top:22px; padding:7px 18px; border-radius:100px;
+    font-weight:700; font-size:14.5px;
+  }
+  .score-explain{
+    max-width:480px; margin:16px auto 0; font-size:13.5px; color:#8A8F9C; line-height:1.6;
+  }
+
+  .section{ margin-top:40px; }
+  .section-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:16px; }
+  .section-head h3{
+    font-family:'Source Serif 4', serif; font-size:21px; font-weight:600; margin:0; color:var(--ink);
+  }
+
+  /* Breakdown bars */
+  .breakdown-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:26px 28px;
+  }
+  .bd-row{ margin-bottom:18px; }
+  .bd-row:last-child{ margin-bottom:0; }
+  .bd-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px; }
+  .bd-label{ font-weight:600; font-size:14px; color:var(--ink); }
+  .bd-score{ font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:600; color:#7A8299; }
+  .bd-track{ height:8px; background:var(--paper-dim); border-radius:100px; overflow:hidden; }
+  .bd-fill{ height:100%; border-radius:100px; transition:width 1s cubic-bezier(.4,0,.2,1); }
+  .bd-total{ display:flex; justify-content:space-between; align-items:baseline; margin-top:22px; padding-top:18px; border-top:1px solid var(--line); }
+  .bd-total .lbl{ font-weight:700; font-size:15px; }
+  .bd-total .val{ font-family:'Source Serif 4', serif; font-weight:700; font-size:20px; }
+
+  /* Working / hurting */
+  .finding-list{ display:flex; flex-direction:column; gap:12px; }
+  .finding{
+    display:flex; gap:13px; padding:16px 18px; border-radius:var(--radius-sm);
+    border:1px solid var(--line); background:var(--card);
+  }
+  .finding.good{ border-color:#CFE8DD; background:var(--good-bg); }
+  .finding.warn{ border-color:#F0DCB4; background:var(--warn-bg); }
+  .finding .icon{ flex-shrink:0; margin-top:1px; }
+  .finding .body h4{ margin:0 0 3px; font-size:14.5px; font-weight:700; color:var(--ink); }
+  .finding .body p{ margin:0; font-size:13.5px; color:var(--ink-soft); line-height:1.5; }
+
+  /* Skills / keywords two-column */
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:640px){ .two-col{ grid-template-columns:1fr; } }
+  .col-card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; }
+  .col-card h4{
+    font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 14px;
+  }
+  .col-card.matched h4{ color:var(--good); }
+  .col-card.missing h4{ color:var(--warn); }
+  .chip-list{ display:flex; flex-direction:column; gap:9px; }
+  .chip{ display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink); }
+  .chip svg{ flex-shrink:0; }
+  .empty-note{ font-size:13px; color:#A0A5B0; font-style:italic; }
+
+  .kw-note{ font-size:12px; color:#9AA0AF; margin-top:14px; font-style:italic; }
+
+  /* Experience */
+  .exp-list{ display:flex; flex-direction:column; gap:14px; }
+  .exp-item{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius-sm); padding:16px 20px; }
+  .exp-item h4{ margin:0 0 5px; font-size:14.5px; font-weight:700; }
+  .exp-item p{ margin:0; font-size:13.5px; color:var(--ink-soft); font-style:italic; line-height:1.5; }
+
+  /* Fix 5 things */
+  .fix-list{ display:flex; flex-direction:column; gap:14px; }
+  .fix-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 22px; box-shadow:var(--shadow);
+    display:flex; gap:18px; align-items:flex-start;
+  }
+  .fix-num{
+    font-family:'Source Serif 4', serif; font-size:26px; font-weight:700; color:#DCD8CB;
+    flex-shrink:0; width:30px; text-align:center;
+  }
+  .fix-tags{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+  .tag{
+    font-size:10.5px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+    padding:4px 10px; border-radius:100px;
+  }
+  .tag-priority-high{ background:var(--bad-bg); color:var(--bad); }
+  .tag-priority-medium{ background:var(--warn-bg); color:var(--warn); }
+  .tag-priority-low{ background:var(--paper-dim); color:#7A8299; }
+  .tag-action{ background:#EAEEF7; color:#3B4C87; }
+  .fix-card p{ margin:0; font-size:14.5px; color:var(--ink); line-height:1.55; }
+
+  /* Action plan */
+  .action-plan{
+    background:var(--ink); color:#fff; border-radius:var(--radius); padding:32px 30px;
+    text-align:center; margin-top:40px;
+  }
+  .action-plan .eyebrow{ font-size:11.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#9BA6C6; margin-bottom:10px; }
+  .action-plan p{ font-family:'Source Serif 4', serif; font-size:19px; line-height:1.5; margin:0; max-width:560px; margin:0 auto; }
+
+  .restart-row{ text-align:center; margin-top:44px; }
+
+  footer{ text-align:center; padding:36px 24px 48px; font-size:12px; color:#B0B4BE; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brandmark"><span class="dot"></span><span>Job Application Scorecard</span></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 1: INPUT                                                -->
+<!-- ============================================================ -->
+<section id="screen-input" class="screen active">
+  <div class="hero">
+    <h1>Job Application Scorecard</h1>
+    <p>Find out how well your CV matches the job before you apply.</p>
+  </div>
+
+  <div class="wrap" style="max-width:880px;">
+    <div class="panel">
+      <div class="input-grid">
+        <div>
+          <div class="field-label"><span class="step">1</span> Paste the job description</div>
+          <p class="field-help">Include the responsibilities, requirements, qualifications and preferred skills.</p>
+          <textarea id="jd-input" placeholder="Paste the full job description here..."></textarea>
+          <div class="char-count" id="jd-count">0 characters</div>
+          <div class="field-error" id="jd-error">Please paste the full job description so we can identify the key requirements.</div>
+        </div>
+        <div>
+          <div class="field-label"><span class="step">2</span> Paste your CV/resume</div>
+          <p class="field-help">Paste the text from your current CV or resume.</p>
+          <textarea id="cv-input" placeholder="Paste your CV/resume here..."></textarea>
+          <div class="char-count" id="cv-count">0 characters</div>
+          <div class="field-error" id="cv-error">Please paste more of your CV so we can make a meaningful comparison.</div>
+        </div>
+      </div>
+
+      <div class="privacy-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Your information is used only to generate your scorecard. For your privacy, avoid including sensitive personal information that isn't necessary for the analysis. Nothing is stored permanently.</span>
+      </div>
+
+      <div class="submit-row">
+        <button class="btn btn-primary" id="analyze-btn" disabled>Analyze My Application →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SCREEN 2: RESULTS                                              -->
+<!-- ============================================================ -->
+<section id="screen-results" class="screen">
+  <div class="wrap results" id="results-container"></div>
+</section>
+
+<footer>Job Application Scorecard — a single-purpose tool to check CV-to-job fit. Not a guarantee of hiring outcomes.</footer>
+
+<script>
+/* =====================================================================
+   NOTE ON ACCESS
+   This tool page is reached via the redirect URL you configure in
+   Lemon Squeezy's checkout settings — buyers land here right after a
+   successful $5 payment. This version has no client-side gate or
+   verification step; the page works whenever it's loaded. See the
+   README notes at the bottom of this file for what that trade-off
+   means and how to add verification later if you want it.
+   ===================================================================== */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* =====================================================================
+   MODULE 1: INPUT INTERFACE
+   ===================================================================== */
+const jdInput = document.getElementById('jd-input');
+const cvInput = document.getElementById('cv-input');
+const jdCount = document.getElementById('jd-count');
+const cvCount = document.getElementById('cv-count');
+const jdError = document.getElementById('jd-error');
+const cvError = document.getElementById('cv-error');
+const analyzeBtn = document.getElementById('analyze-btn');
+
+const MIN_JD_LEN = 150;
+const MIN_CV_LEN = 150;
+
+function updateInputState(){
+  const jdLen = jdInput.value.trim().length;
+  const cvLen = cvInput.value.trim().length;
+  jdCount.textContent = jdLen + ' characters';
+  cvCount.textContent = cvLen + ' characters';
+
+  jdError.classList.toggle('show', jdLen > 0 && jdLen < MIN_JD_LEN);
+  cvError.classList.toggle('show', cvLen > 0 && cvLen < MIN_CV_LEN);
+
+  analyzeBtn.disabled = !(jdLen >= MIN_JD_LEN && cvLen >= MIN_CV_LEN);
+}
+jdInput.addEventListener('input', updateInputState);
+cvInput.addEventListener('input', updateInputState);
+
+/* =====================================================================
+   MODULE 2: ANALYSIS TRIGGER
+   Payment already happened on Lemon Squeezy's hosted checkout before
+   the user arrived on this page (see MODULE 0). No payment step runs
+   here — the button goes straight to analysis.
+   ===================================================================== */
+analyzeBtn.addEventListener('click', () => {
+  if (analyzeBtn.disabled) return;
+  const originalHTML = analyzeBtn.innerHTML;
+  analyzeBtn.disabled = true;
+  analyzeBtn.innerHTML = '<span class="spinner"></span> Analyzing your application…';
+
+  // Small delay so the loading state is perceptible; analysis itself is fast.
+  setTimeout(() => {
+    const jdText = jdInput.value;
+    const cvText = cvInput.value;
+    const result = ScoringEngine.analyze(jdText, cvText);
+    ResultsRenderer.render(result);
+    showScreen('screen-results');
+    analyzeBtn.disabled = false;
+    analyzeBtn.innerHTML = originalHTML;
+  }, 400);
+});
+
+/* =====================================================================
+   MODULE 3: TEXT EXTRACTION
+   Lightweight NLP-ish helpers: tokenization, phrase/skill matching,
+   evidence detection. No external libraries — deterministic and fast.
+   Structured so a real AI/API-backed extractor can be swapped in later
+   (see ScoringEngine.analyze below for the seam).
+   ===================================================================== */
+const Extraction = (() => {
+
+  // Canonical skill/keyword dictionary with common synonyms/variants.
+  // Each entry: canonical label -> array of matchable variants (lowercase).
+  const SKILL_DICTIONARY = {
+    'Excel': ['excel', 'ms excel', 'microsoft excel', 'spreadsheets', 'pivot tables', 'vlookup'],
+    'Microsoft Office': ['microsoft office', 'ms office', 'office suite', 'word and excel', 'powerpoint'],
+    'Project Management': ['project management', 'project manager', 'managing projects', 'project lead', 'pmp', 'agile', 'scrum', 'project coordination', 'project planning'],
+    'Data Analysis': ['data analysis', 'data analytics', 'analyzing data', 'analytics', 'data-driven', 'data interpretation'],
+    'Communication': ['communication skills', 'verbal communication', 'written communication', 'communication', 'presenting', 'presentation skills'],
+    'Customer Service': ['customer service', 'client service', 'customer support', 'client-facing', 'customer facing', 'customer relations'],
+    'SQL': ['sql', 'mysql', 'postgresql', 'database queries', 'structured query language'],
+    'Python': ['python'],
+    'JavaScript': ['javascript', 'js', 'react', 'node.js', 'node'],
+    'Leadership': ['leadership', 'leading a team', 'team lead', 'managed a team', 'people management', 'supervising staff'],
+    'Sales': ['sales', 'business development', 'account management', 'closing deals', 'quota'],
+    'Marketing': ['marketing', 'digital marketing', 'campaign management', 'seo', 'social media marketing'],
+    'Budgeting': ['budgeting', 'budget management', 'financial planning', 'cost control', 'forecasting'],
+    'Reporting': ['reporting', 'report writing', 'status reports', 'kpi reporting', 'dashboards'],
+    'Negotiation': ['negotiation', 'negotiating contracts', 'vendor negotiation'],
+    'Problem Solving': ['problem solving', 'problem-solving', 'troubleshooting', 'critical thinking'],
+    'Time Management': ['time management', 'prioritization', 'multitasking', 'meeting deadlines'],
+    'Teamwork': ['teamwork', 'collaboration', 'cross-functional', 'team player'],
+    'Public Speaking': ['public speaking', 'presenting to stakeholders', 'presentations'],
+    'Recruiting': ['recruiting', 'talent acquisition', 'hiring', 'interviewing candidates'],
+    'Bookkeeping': ['bookkeeping', 'accounts payable', 'accounts receivable', 'reconciliation'],
+    'Content Writing': ['content writing', 'copywriting', 'blog writing', 'editorial'],
+    'Graphic Design': ['graphic design', 'adobe photoshop', 'adobe illustrator', 'figma', 'canva'],
+    'Customer Relationship Management': ['crm', 'salesforce', 'hubspot'],
+    'Supply Chain': ['supply chain', 'logistics', 'inventory management', 'procurement'],
+    'Quality Assurance': ['quality assurance', 'qa testing', 'quality control'],
+    'Event Planning': ['event planning', 'event coordination', 'event management'],
+    'Training': ['training', 'onboarding', 'mentoring', 'coaching staff'],
+    'Legal Compliance': ['compliance', 'regulatory', 'legal review'],
+    'Research': ['research', 'market research', 'competitive analysis'],
+  };
+
+  // Words that signal a requirement is MANDATORY vs PREFERRED
+  const MANDATORY_SIGNALS = ['required', 'must have', 'must be', 'requirement', 'essential', 'minimum qualification', 'need to have', 'mandatory'];
+  const PREFERRED_SIGNALS = ['preferred', 'nice to have', 'plus', 'bonus', 'ideally', 'a plus', 'desirable', 'advantageous'];
+
+  const DEGREE_TERMS = ["bachelor's", 'bachelor', "master's", 'master', 'mba', 'phd', 'doctorate', 'degree', 'diploma', 'associate degree'];
+  const CERT_TERMS = ['certification', 'certified', 'license', 'licensed', 'accreditation', 'pmp', 'cpa', 'cfa', 'shrm'];
+
+  const ACHIEVEMENT_PATTERNS = [
+    /\d+(\.\d+)?\s?(%|percent|pct)\b/gi,                 // percentages (symbol or spelled out)
+    /\$\s?\d[\d,]*(\.\d+)?\s?(k|m|million|thousand)?/gi, // money
+    /\b\d[\d,]*\+?\s?(customers|clients|users|employees|people|team members|staff|accounts|leads|units)\b/gi,
+    /\bteam of\s?\d+/gi,
+    /\b\d+\s?(hours|days|weeks|months|years)\b/gi,
+    /\b(increased?|increasing|grew|growing|grow|boosted|boosting|improved?|improving|reduced?|reducing|decreased?|decreasing|cut|cutting|saved?|saving|generated?|generating|delivered?|delivering|achieved?|achieving|exceeded?|exceeding|surpassed?|surpassing|streamlined?|streamlining|drove|driving)\b/gi,
+  ];
+
+  function normalize(text){
+    return (text || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  function splitSentences(text){
+    return (text || '').split(/(?<=[.!?\n])\s+/).map(s => s.trim()).filter(Boolean);
+  }
+
+  // Find which dictionary skills are mentioned in a text, and whether the
+  // mention looks mandatory or preferred (for JD) — returns array of
+  // { skill, mandatory, evidenceSentence }
+  function findSkillsInText(text, opts = {}){
+    const norm = normalize(text);
+    const sentences = splitSentences(text);
+    const found = [];
+
+    for (const [canonical, variants] of Object.entries(SKILL_DICTIONARY)){
+      let matchedVariant = null;
+      for (const v of variants){
+        if (norm.includes(v)){ matchedVariant = v; break; }
+      }
+      if (!matchedVariant) continue;
+
+      // find the sentence containing it for context / mandatory detection
+      let evidenceSentence = sentences.find(s => normalize(s).includes(matchedVariant)) || '';
+      let mandatory = true;
+      if (opts.detectPriority){
+        const sNorm = normalize(evidenceSentence);
+        const isPreferred = PREFERRED_SIGNALS.some(sig => sNorm.includes(sig));
+        const isMandatory = MANDATORY_SIGNALS.some(sig => sNorm.includes(sig));
+        mandatory = isMandatory || !isPreferred; // default to mandatory unless clearly preferred
+      }
+      found.push({ skill: canonical, mandatory, evidenceSentence });
+    }
+    return found;
+  }
+
+  function findAchievements(text){
+    const matches = [];
+    for (const pattern of ACHIEVEMENT_PATTERNS){
+      const found = text.match(pattern);
+      if (found) matches.push(...found);
+    }
+    // de-duplicate
+    return [...new Set(matches.map(m => m.trim()))];
+  }
+
+  function countSentencesWithAchievements(text){
+    const sentences = splitSentences(text);
+    let count = 0;
+    for (const s of sentences){
+      if (ACHIEVEMENT_PATTERNS.some(p => { p.lastIndex = 0; return p.test(s); })) count++;
+    }
+    return count;
+  }
+
+  function findEducationSignals(text){
+    const norm = normalize(text);
+    const degrees = DEGREE_TERMS.filter(t => norm.includes(t));
+    const certs = CERT_TERMS.filter(t => norm.includes(t));
+    return { degrees, certs };
+  }
+
+  // Extract meaningful multi-word phrases / keywords from JD beyond the
+  // fixed skill dictionary — simple frequency + stopword filtering.
+  const STOPWORDS = new Set(['the','and','for','with','you','your','are','will','have','has','this','that','from','our','a','an','to','of','in','on','as','is','be','or','we','at','by','about','across','role','job','looking','candidate','ideal','who','it','their','they','someone','amazing','seeking','help','helping','organization','thrive','grow','growing','dynamic','changing','fast-paced','environment','lots','opportunity','right','person','fit','culturally','culture','great','good','strong','excellent','skills','skill','ability','able','work','working','team','teams','experience','years','including','other','also','such','into','can','all','more','than','most','best','new','you\'ll','we\'re','including','various','many','some','get','make','take','provide','ensure','including']);
+  function extractTopKeywords(jdText, limit = 15){
+    const norm = normalize(jdText).replace(/[^\w\s%$]/g, ' ');
+    const words = norm.split(' ').filter(w => w.length > 3 && !STOPWORDS.has(w));
+    const freq = {};
+    for (const w of words){ freq[w] = (freq[w]||0) + 1; }
+    // Prefer words that also appear in our skill dictionary as high-signal,
+    // then fall back to frequency for remaining slots.
+    const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]).map(([w]) => w);
+    return sorted.slice(0, limit);
+  }
+
+  return {
+    normalize, splitSentences, findSkillsInText, findAchievements,
+    countSentencesWithAchievements, findEducationSignals, extractTopKeywords,
+    MANDATORY_SIGNALS, PREFERRED_SIGNALS
+  };
+})();
+
+/* =====================================================================
+   MODULE 4: SCORING ENGINE
+   Pure function: (jdText, cvText) -> structured result object.
+   This is the seam where a future AI/API-powered analyzer can replace
+   the heuristic logic below — as long as it returns the same shape,
+   ResultsRenderer needs no changes.
+   ===================================================================== */
+const ScoringEngine = (() => {
+
+  function scoreRequiredSkills(jdText, cvText){
+    const jdSkills = Extraction.findSkillsInText(jdText, { detectPriority: true });
+    const cvSkillsFound = Extraction.findSkillsInText(cvText);
+    const cvSkillNames = new Set(cvSkillsFound.map(s => s.skill));
+
+    // Cap to the most important ~6-8 skills so scoring reflects "important skills", not every dictionary hit
+    const importantJdSkills = jdSkills.slice(0, 8);
+    const matched = importantJdSkills.filter(s => cvSkillNames.has(s.skill));
+    const missing = importantJdSkills.filter(s => !cvSkillNames.has(s.skill));
+
+    const total = importantJdSkills.length;
+    const matchedCount = matched.length;
+    const ratio = total > 0 ? matchedCount / total : null;
+    const points = ratio === null ? 15 : Math.round(ratio * 30); // if we truly can't identify any, don't invent — give neutral midpoint
+
+    return {
+      points, max: 30, total, matchedCount,
+      matched: matched.map(s => s.skill),
+      missing: missing.map(s => s.skill),
+      identifiable: total > 0,
+    };
+  }
+
+  function scoreExperience(jdText, cvText){
+    // Look at responsibility-signaling verbs/nouns from JD and see if
+    // similar language / role context appears in CV, plus role-title overlap.
+    const jdSkills = Extraction.findSkillsInText(jdText);
+    const cvSkills = Extraction.findSkillsInText(cvText);
+    const cvSkillNames = new Set(cvSkills.map(s => s.skill));
+    const jdSkillNames = jdSkills.map(s => s.skill);
+
+    const overlapping = jdSkillNames.filter(s => cvSkillNames.has(s));
+    const overlapRatio = jdSkillNames.length > 0 ? overlapping.length / jdSkillNames.length : null;
+
+    // Seniority signal words
+    const seniorityWords = ['senior', 'lead', 'manager', 'director', 'head of', 'principal', 'junior', 'entry level', 'intern'];
+    const jdNorm = Extraction.normalize(jdText);
+    const cvNorm = Extraction.normalize(cvText);
+    const jdSeniority = seniorityWords.filter(w => jdNorm.includes(w));
+    const cvSeniority = seniorityWords.filter(w => cvNorm.includes(w));
+    const seniorityAligned = jdSeniority.length === 0 || jdSeniority.some(w => cvSeniority.includes(w)) ||
+      (jdSeniority.some(w => ['senior','lead','manager','director','head of','principal'].includes(w)) &&
+       cvSeniority.some(w => ['senior','lead','manager','director','head of','principal'].includes(w)));
+
+    let level, points;
+    if (overlapRatio === null){
+      level = 'unclear'; points = 12;
+    } else if (overlapRatio >= 0.6){
+      level = 'strong'; points = seniorityAligned ? 25 : 21;
+    } else if (overlapRatio >= 0.3){
+      level = 'moderate'; points = seniorityAligned ? 18 : 15;
+    } else {
+      level = 'weak'; points = 8;
+    }
+
+    return {
+      points, max: 25, level,
+      overlappingAreas: overlapping,
+      seniorityNote: !seniorityAligned && jdSeniority.length > 0,
+    };
+  }
+
+  function scoreEducation(jdText, cvText){
+    const jdEdu = Extraction.findEducationSignals(jdText);
+    const cvEdu = Extraction.findEducationSignals(cvText);
+    const jdNorm = Extraction.normalize(jdText);
+
+    const requiresDegree = jdEdu.degrees.length > 0;
+    const requiresCert = jdEdu.certs.length > 0;
+
+    if (!requiresDegree && !requiresCert){
+      return { points: 15, max: 15, note: 'no-requirement', identifiable: false };
+    }
+
+    // is it stated as mandatory or preferred?
+    const degreeContext = Extraction.splitSentences(jdText).find(s => jdEdu.degrees.some(d => Extraction.normalize(s).includes(d))) || '';
+    const isPreferredDegree = Extraction.PREFERRED_SIGNALS.some(sig => Extraction.normalize(degreeContext).includes(sig));
+
+    const hasDegree = cvEdu.degrees.length > 0;
+    const hasCert = cvEdu.certs.length > 0;
+
+    let points = 0;
+    let max = 15;
+    let degreeMet = !requiresDegree || hasDegree;
+    let certMet = !requiresCert || hasCert;
+
+    if (requiresDegree){
+      if (hasDegree) points += 10;
+      else points += isPreferredDegree ? 6 : 0; // lighter penalty if only preferred
+    } else {
+      points += 10;
+    }
+    if (requiresCert){
+      if (hasCert) points += 5;
+      else points += 2;
+    } else {
+      points += 5;
+    }
+    points = Math.min(points, 15);
+
+    return {
+      points, max: 15,
+      requiresDegree, requiresCert, hasDegree, hasCert, isPreferredDegree,
+      identifiable: true,
+    };
+  }
+
+  function scoreKeywords(jdText, cvText){
+    const keywords = Extraction.extractTopKeywords(jdText, 15);
+    const cvNorm = Extraction.normalize(cvText);
+    const found = keywords.filter(k => cvNorm.includes(k));
+    const missing = keywords.filter(k => !cvNorm.includes(k));
+    const ratio = keywords.length > 0 ? found.length / keywords.length : null;
+    const points = ratio === null ? 8 : Math.round(ratio * 15);
+
+    return {
+      points, max: 15,
+      total: keywords.length, foundCount: found.length,
+      found, missing: missing.slice(0, 6),
+    };
+  }
+
+  function scoreAchievements(cvText){
+    const achievements = Extraction.findAchievements(cvText);
+    const sentencesWithEvidence = Extraction.countSentencesWithAchievements(cvText);
+    const totalSentences = Extraction.splitSentences(cvText).length;
+    const density = totalSentences > 0 ? sentencesWithEvidence / totalSentences : 0;
+
+    let points;
+    if (sentencesWithEvidence >= 5 && density > 0.25) points = 15;
+    else if (sentencesWithEvidence >= 3) points = 11;
+    else if (sentencesWithEvidence >= 1) points = 7;
+    else points = 3;
+
+    return {
+      points, max: 15,
+      evidenceCount: sentencesWithEvidence,
+      mostlyResponsibilities: sentencesWithEvidence < 2,
+    };
+  }
+
+  function ratingForScore(score){
+    if (score >= 90) return { label: 'Excellent Match', tone: 'good' };
+    if (score >= 75) return { label: 'Strong Match', tone: 'good' };
+    if (score >= 60) return { label: 'Good Potential', tone: 'warn' };
+    if (score >= 40) return { label: 'Weak Match', tone: 'warn' };
+    return { label: 'Low Match', tone: 'bad' };
+  }
+
+  function actionPlanForScore(score){
+    if (score >= 80) return "You're a strong match. Make the recommended improvements, then apply.";
+    if (score >= 60) return 'You have a reasonable match. Fix the highest-priority gaps before applying.';
+    if (score >= 40) return 'Your CV needs significant improvement for this role. Focus on the major skill and experience gaps first.';
+    return 'This appears to be a weak CV-to-job match. Review the requirements carefully before applying.';
+  }
+
+  function buildFindings(skills, experience, education, keywords, achievements){
+    const working = [];
+    const hurting = [];
+
+    // Skills
+    if (skills.identifiable && skills.matchedCount > 0){
+      working.push({
+        title: `${skills.matchedCount} important skill${skills.matchedCount === 1 ? '' : 's'} matched`,
+        body: `Your CV clearly demonstrates ${skills.matchedCount} of the ${skills.total} key skill${skills.total === 1 ? '' : 's'} requested for this role.`
+      });
+    }
+    if (skills.identifiable && skills.missing.length > 0){
+      hurting.push({
+        title: skills.missing.length === 1
+          ? `${skills.missing[0]} is missing or unclear`
+          : `${skills.missing.length} important skills are missing or unclear`,
+        body: skills.missing.length === 1
+          ? `${skills.missing[0]} appears to be an important requirement, but your CV does not clearly demonstrate it.`
+          : `${skills.missing.slice(0,3).join(', ')}${skills.missing.length > 3 ? ', and others' : ''} appear important for this role, but your CV does not clearly demonstrate ${skills.missing.length === 1 ? 'it' : 'them'}.`
+      });
+    }
+
+    // Experience
+    if (experience.level === 'strong' || experience.level === 'moderate'){
+      const count = experience.overlappingAreas.length;
+      working.push({
+        title: `${count} relevant experience area${count === 1 ? '' : 's'}`,
+        body: `${count === 1 ? 'One area' : count + ' areas'} of your previous experience closely align${count === 1 ? 's' : ''} with the responsibilities of this position.`
+      });
+    } else if (experience.level === 'weak'){
+      hurting.push({
+        title: "Relevant experience isn't clearly demonstrated",
+        body: 'The responsibilities in this role don\u2019t clearly line up with what your CV describes. Consider making relevant past work more explicit.'
+      });
+    }
+    if (experience.seniorityNote){
+      hurting.push({
+        title: 'Seniority level may not match',
+        body: 'The job description signals a specific seniority level that isn\u2019t clearly reflected in your CV.'
+      });
+    }
+
+    // Education
+    if (education.identifiable){
+      if ((!education.requiresDegree || education.hasDegree) && (!education.requiresCert || education.hasCert)){
+        working.push({
+          title: 'Strong education match',
+          body: 'Your education and qualifications appear to meet the main requirements listed in the job description.'
+        });
+      } else if (education.requiresDegree && !education.hasDegree){
+        hurting.push({
+          title: education.isPreferredDegree ? 'Preferred degree not confirmed' : 'Required degree not confirmed',
+          body: education.isPreferredDegree
+            ? 'A degree is listed as preferred for this role, but it isn\u2019t clearly stated in your CV.'
+            : 'A specific degree appears to be required for this role, but it isn\u2019t clearly stated in your CV.'
+        });
+      }
+    }
+
+    // Keywords
+    if (keywords.total > 0){
+      if (keywords.foundCount >= keywords.total * 0.6){
+        working.push({
+          title: `${keywords.foundCount}/${keywords.total} important keywords found`,
+          body: 'Your CV naturally contains most of the important language used in this job description.'
+        });
+      }
+      if (keywords.missing.length > 0){
+        hurting.push({
+          title: `${keywords.missing.length} important keyword${keywords.missing.length === 1 ? ' is' : 's are'} missing`,
+          body: 'Several terms used in the job description are not clearly represented in your CV. Only add these if they truthfully reflect your experience.'
+        });
+      }
+    }
+
+    // Achievements
+    if (achievements.evidenceCount >= 3){
+      working.push({
+        title: 'Measurable achievements present',
+        body: `Your CV includes ${achievements.evidenceCount} statements with measurable results, which strengthens your application.`
+      });
+    } else if (achievements.mostlyResponsibilities){
+      hurting.push({
+        title: 'Few measurable results',
+        body: 'Your CV mostly lists responsibilities rather than results. Adding numbers and outcomes would make it more competitive.'
+      });
+    }
+
+    return { working: working.slice(0,5), hurting: hurting.slice(0,5) };
+  }
+
+  function buildFixes(skills, experience, education, keywords, achievements, cvText){
+    const fixes = [];
+
+    // 1. Missing high-priority skill -> ADD
+    if (skills.missing.length > 0){
+      fixes.push({
+        priority: 'High', action: 'Add',
+        text: `If you genuinely have experience with ${skills.missing[0]}, make it explicit in your skills or experience section — it appears to be an important requirement for this role.`
+      });
+    }
+
+    // 2. Weak achievements -> QUANTIFY
+    if (achievements.mostlyResponsibilities){
+      fixes.push({
+        priority: 'High', action: 'Quantify',
+        text: 'Add measurable results to your experience, such as percentage improvements, number of customers, revenue generated, team size, or time saved.'
+      });
+    }
+
+    // 3. Experience not visible -> MENTION or REWRITE
+    if (experience.level === 'weak' || experience.level === 'moderate'){
+      const focusSkill = skills.missing[1] || skills.matched[0];
+      if (focusSkill){
+        fixes.push({
+          priority: experience.level === 'weak' ? 'High' : 'Medium', action: 'Mention',
+          text: `Make your ${focusSkill.toLowerCase()} experience more visible if you have it — it's a meaningful part of this role's responsibilities.`
+        });
+      } else {
+        fixes.push({
+          priority: 'Medium', action: 'Rewrite',
+          text: 'Replace generic responsibility statements (e.g. "Managed accounts") with result-focused statements that explain what you achieved.'
+        });
+      }
+    }
+
+    // 4. Missing keywords -> MENTION (truthfully)
+    if (keywords.missing.length > 0){
+      fixes.push({
+        priority: 'Medium', action: 'Mention',
+        text: `Consider naturally incorporating terms like "${keywords.missing.slice(0,2).join('", "')}" if they genuinely reflect your background — don't add them just to match the posting.`
+      });
+    }
+
+    // 5. Education gap -> ADD or MENTION
+    if (education.identifiable && education.requiresDegree && !education.hasDegree){
+      fixes.push({
+        priority: education.isPreferredDegree ? 'Low' : 'High', action: 'Mention',
+        text: education.isPreferredDegree
+          ? 'If you have a relevant degree or equivalent experience, mention it — it\u2019s listed as a nice-to-have for this role.'
+          : 'If you hold the required degree or an equivalent qualification, make sure it is clearly listed near the top of your CV.'
+      });
+    }
+
+    // Fallback pool — always-legitimate, generic-but-truthful advice used
+    // to top up to 5 recommendations when specific gaps run out.
+    const fallbackPool = [
+      { priority: 'Medium', action: 'Remove',
+        text: 'Reduce irrelevant information (unrelated old roles, generic filler phrases) that takes space away from experience related to this position.' },
+      { priority: 'Low', action: 'Rewrite',
+        text: 'Tighten your professional summary so the first few lines speak directly to this role\u2019s core requirements.' },
+      { priority: 'Low', action: 'Mention',
+        text: 'Reorder your CV so the most relevant experience for this specific role appears near the top, not buried further down.' },
+      { priority: 'Medium', action: 'Rewrite',
+        text: 'Mirror the specific language this job description uses for your matching skills, as long as it accurately reflects what you\u2019ve done.' },
+      { priority: 'Low', action: 'Quantify',
+        text: 'Where you already mention results, double check the numbers are specific (exact percentages, dollar amounts, or counts) rather than vague.' },
+    ];
+    for (const fb of fallbackPool){
+      if (fixes.length >= 5) break;
+      if (!fixes.some(f => f.text === fb.text)) fixes.push(fb);
+    }
+
+    return fixes.slice(0, 5);
+  }
+
+  function analyze(jdText, cvText){
+    const skills = scoreRequiredSkills(jdText, cvText);
+    const experience = scoreExperience(jdText, cvText);
+    const education = scoreEducation(jdText, cvText);
+    const keywords = scoreKeywords(jdText, cvText);
+    const achievements = scoreAchievements(cvText);
+
+    const totalScore = Math.round(skills.points + experience.points + education.points + keywords.points + achievements.points);
+    const rating = ratingForScore(totalScore);
+    const findings = buildFindings(skills, experience, education, keywords, achievements);
+    const fixes = buildFixes(skills, experience, education, keywords, achievements, cvText);
+    const actionPlan = actionPlanForScore(totalScore);
+
+    // Experience area explanations for "Experience Match" section
+    const experienceExplanations = experience.overlappingAreas.slice(0, 4).map(area => {
+      const templates = {
+        'Customer Service': 'Your previous customer service experience aligns with the client-facing responsibilities in this role.',
+        'Reporting': 'Your reporting experience aligns with the reporting responsibilities listed in the job description.',
+        'Project Management': 'Your project management background aligns with how this role plans and delivers work.',
+        'Leadership': 'Your leadership experience aligns with the people-management aspects of this role.',
+        'Sales': 'Your sales background aligns with the revenue-focused responsibilities in this role.',
+        'Data Analysis': 'Your data analysis experience aligns with the analytical demands of this role.',
+      };
+      return { area, text: templates[area] || `Your experience with ${area.toLowerCase()} aligns with responsibilities mentioned in the job description.` };
+    });
+
+    return {
+      totalScore, rating,
+      breakdown: { skills, experience, education, keywords, achievements },
+      findings, fixes, actionPlan, experienceExplanations,
+    };
+  }
+
+  return { analyze };
+})();
+
+/* =====================================================================
+   MODULE 5: RESULTS INTERFACE
+   ===================================================================== */
+const ResultsRenderer = (() => {
+
+  function iconCheck(color){
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  }
+  function iconWarn(color){
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-2.96L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>`;
+  }
+
+  function toneColor(tone){
+    return tone === 'good' ? 'var(--good)' : tone === 'warn' ? 'var(--warn)' : 'var(--bad)';
+  }
+  function toneBg(tone){
+    return tone === 'good' ? 'var(--good-bg)' : tone === 'warn' ? 'var(--warn-bg)' : 'var(--bad-bg)';
+  }
+
+  function barColor(pct){
+    if (pct >= 0.75) return 'var(--good)';
+    if (pct >= 0.5) return 'var(--warn)';
+    return 'var(--bad)';
+  }
+
+  function render(result){
+    const { totalScore, rating, breakdown, findings, fixes, actionPlan, experienceExplanations } = result;
+    const circumference = 2 * Math.PI * 94;
+    const offset = circumference * (1 - totalScore/100);
+
+    const html = `
+      <div class="score-hero">
+        <div class="eyebrow">Your Job Match Score</div>
+        <div class="score-ring-wrap">
+          <svg viewBox="0 0 220 220">
+            <circle class="ring-bg" cx="110" cy="110" r="94"/>
+            <circle class="ring-fg" cx="110" cy="110" r="94"
+              stroke="${toneColor(rating.tone)}"
+              stroke-dasharray="${circumference}"
+              stroke-dashoffset="${circumference}"
+              data-target-offset="${offset}"/>
+          </svg>
+          <div class="score-num-wrap">
+            <div class="score-num">${totalScore}</div>
+            <div class="score-denom">out of 100</div>
+          </div>
+        </div>
+        <div class="rating-badge" style="background:${toneBg(rating.tone)}; color:${toneColor(rating.tone)};">${rating.label}</div>
+        <p class="score-explain">This score measures how closely your CV aligns with this specific job description. It is not a prediction of whether you'll get hired.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>Score Breakdown</h3></div>
+        <div class="breakdown-card">
+          ${breakdownRow('Required Skills', breakdown.skills.points, breakdown.skills.max)}
+          ${breakdownRow('Relevant Experience', breakdown.experience.points, breakdown.experience.max)}
+          ${breakdownRow('Education & Qualifications', breakdown.education.points, breakdown.education.max)}
+          ${breakdownRow('Keyword Alignment', breakdown.keywords.points, breakdown.keywords.max)}
+          ${breakdownRow('Achievements & Evidence', breakdown.achievements.points, breakdown.achievements.max)}
+          <div class="bd-total">
+            <span class="lbl">Total</span>
+            <span class="val serif">${totalScore}/100</span>
+          </div>
+        </div>
+      </div>
+
+      ${findings.working.length ? `
+      <div class="section">
+        <div class="section-head"><h3>What's Working</h3></div>
+        <div class="finding-list">
+          ${findings.working.map(f => `
+            <div class="finding good">
+              <span class="icon">${iconCheck('var(--good)')}</span>
+              <div class="body"><h4>${escapeHtml(f.title)}</h4><p>${escapeHtml(f.body)}</p></div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${findings.hurting.length ? `
+      <div class="section">
+        <div class="section-head"><h3>What's Hurting Your Application</h3></div>
+        <div class="finding-list">
+          ${findings.hurting.map(f => `
+            <div class="finding warn">
+              <span class="icon">${iconWarn('var(--warn)')}</span>
+              <div class="body"><h4>${escapeHtml(f.title)}</h4><p>${escapeHtml(f.body)}</p></div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <div class="section">
+        <div class="section-head"><h3>Skills Match</h3></div>
+        <div class="two-col">
+          <div class="col-card matched">
+            <h4>Matched</h4>
+            ${breakdown.skills.matched.length ? `
+            <div class="chip-list">
+              ${breakdown.skills.matched.map(s => `<div class="chip">${iconCheck('var(--good)')} ${escapeHtml(s)}</div>`).join('')}
+            </div>` : `<p class="empty-note">We couldn't confidently identify matched skills from the text provided.</p>`}
+          </div>
+          <div class="col-card missing">
+            <h4>Missing or Unclear</h4>
+            ${breakdown.skills.missing.length ? `
+            <div class="chip-list">
+              ${breakdown.skills.missing.map(s => `<div class="chip">${iconWarn('var(--warn)')} ${escapeHtml(s)}</div>`).join('')}
+            </div>` : `<p class="empty-note">No major skill gaps identified.</p>`}
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>Important Keywords</h3></div>
+        <div class="two-col">
+          <div class="col-card matched">
+            <h4>Found in Your CV</h4>
+            ${breakdown.keywords.found.length ? `
+            <div class="chip-list">${breakdown.keywords.found.slice(0,10).map(k => `<div class="chip">${iconCheck('var(--good)')} ${escapeHtml(k)}</div>`).join('')}</div>`
+            : `<p class="empty-note">We couldn't confidently identify this requirement from the job description.</p>`}
+          </div>
+          <div class="col-card missing">
+            <h4>Missing or Unclear</h4>
+            ${breakdown.keywords.missing.length ? `
+            <div class="chip-list">${breakdown.keywords.missing.map(k => `<div class="chip">${iconWarn('var(--warn)')} ${escapeHtml(k)}</div>`).join('')}</div>`
+            : `<p class="empty-note">No major keyword gaps identified.</p>`}
+          </div>
+        </div>
+        <p class="kw-note">Only add these terms if they accurately describe your real skills or experience.</p>
+      </div>
+
+      ${experienceExplanations.length ? `
+      <div class="section">
+        <div class="section-head"><h3>Experience Match</h3></div>
+        <div class="exp-list">
+          ${experienceExplanations.map(e => `
+            <div class="exp-item">
+              <h4>${escapeHtml(e.area)}</h4>
+              <p>"${escapeHtml(e.text)}"</p>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <div class="section">
+        <div class="section-head"><h3>Fix These 5 Things Before Applying</h3></div>
+        <div class="fix-list">
+          ${fixes.map((f, i) => `
+            <div class="fix-card">
+              <div class="fix-num serif">${i+1}</div>
+              <div>
+                <div class="fix-tags">
+                  <span class="tag tag-priority-${f.priority.toLowerCase()}">${f.priority} Priority</span>
+                  <span class="tag tag-action">${f.action}</span>
+                </div>
+                <p>${escapeHtml(f.text)}</p>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="action-plan">
+        <div class="eyebrow">Your Next Move</div>
+        <p>${escapeHtml(actionPlan)}</p>
+      </div>
+
+      <div class="restart-row">
+        <button class="btn btn-ghost" id="start-over-btn">Analyze a different application</button>
+      </div>
+    `;
+
+    const container = document.getElementById('results-container');
+    container.innerHTML = html;
+
+    // Animate ring + bars after paint
+    requestAnimationFrame(() => {
+      const ring = container.querySelector('.ring-fg');
+      if (ring) ring.style.strokeDashoffset = ring.dataset.targetOffset;
+      container.querySelectorAll('.bd-fill').forEach(el => {
+        el.style.width = el.dataset.targetWidth;
+      });
+    });
+
+    document.getElementById('start-over-btn').addEventListener('click', () => {
+      jdInput.value = ''; cvInput.value = '';
+      updateInputState();
+      showScreen('screen-input');
+    });
+  }
+
+  function breakdownRow(label, points, max){
+    const pct = points / max;
+    return `
+      <div class="bd-row">
+        <div class="bd-top">
+          <span class="bd-label">${label}</span>
+          <span class="bd-score">${points}/${max}</span>
+        </div>
+        <div class="bd-track"><div class="bd-fill" style="width:0%; background:${barColor(pct)};" data-target-width="${Math.round(pct*100)}%"></div></div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  return { render };
+})();
+
+// Prefix each payment feature-list item with a check icon
+(function(){
+  const checkSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F7B5F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><polyline points="20 6 9 17 4 12"/></svg>';
+  document.querySelectorAll('#feature-list li').forEach(li => {
+    li.innerHTML = checkSvg + ' ' + li.innerHTML;
+  });
+})();
+</script>
+</body>
+</html>

@@ -104,6 +104,30 @@
   }
   .field-help{ font-size:12.5px; color:#7A8299; margin:0 0 10px 28px; }
 
+  .upload-row{ display:flex; align-items:center; gap:10px; margin:0 0 10px 28px; flex-wrap:wrap; }
+  .upload-btn{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:12.5px; font-weight:600; color:var(--ink);
+    background:var(--paper-dim); border:1.5px dashed var(--line);
+    border-radius:8px; padding:8px 14px; cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .upload-btn:hover{ border-color:var(--ink); background:#EFEBDE; }
+  .upload-filename{ font-size:12.5px; color:#7A8299; font-style:italic; }
+  .upload-status{
+    font-size:12px; margin:0 0 10px 28px; display:none; align-items:center; gap:6px;
+  }
+  .upload-status.show{ display:flex; }
+  .upload-status.loading{ color:#7A8299; }
+  .upload-status.success{ color:var(--good); }
+  .upload-status.error{ color:var(--bad); }
+  .upload-spinner{
+    width:11px; height:11px; border-radius:50%; flex-shrink:0;
+    border:2px solid rgba(20,33,61,0.15); border-top-color:var(--ink-soft);
+    animation:upload-spin .7s linear infinite;
+  }
+  @keyframes upload-spin{ to{ transform:rotate(360deg); } }
+
   textarea{
     width:100%;
     min-height:220px;
@@ -353,7 +377,16 @@
         </div>
         <div>
           <div class="field-label"><span class="step">2</span> Paste your CV/resume</div>
-          <p class="field-help">Paste the text from your current CV or resume.</p>
+          <p class="field-help">Paste the text below, or upload a PDF/Word file and we'll extract it for you.</p>
+          <div class="upload-row">
+            <label class="upload-btn" for="cv-file-input">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload CV (PDF or Word)
+            </label>
+            <input type="file" id="cv-file-input" accept=".pdf,.docx" style="display:none;">
+            <span class="upload-filename" id="upload-filename"></span>
+          </div>
+          <div class="upload-status" id="upload-status"></div>
           <textarea id="cv-input" placeholder="Paste your CV/resume here..."></textarea>
           <div class="char-count" id="cv-count">0 characters</div>
           <div class="field-error" id="cv-error">Please paste more of your CV so we can make a meaningful comparison.</div>
@@ -398,6 +431,100 @@ function showScreen(id){
 }
 
 /* =====================================================================
+   MODULE: FILE UPLOAD & TEXT EXTRACTION
+   Runs entirely in the browser — no server, no API. Libraries are
+   lazy-loaded from a CDN only when the user actually picks a file, so
+   the page stays light for anyone who just pastes text instead.
+   - PDF text extraction via pdf.js (works for text-based PDFs; a
+     scanned/image-only PDF has no text layer to extract, so it will
+     fail gracefully and ask the user to paste instead).
+   - DOCX text extraction via mammoth.js.
+   - Old .doc format isn't supported (unreliable to parse in-browser);
+     the file picker only accepts .pdf and .docx.
+   ===================================================================== */
+const FileExtraction = (() => {
+  const PDF_JS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  const PDF_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const MAMMOTH_URL = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.min.js';
+
+  const loadedScripts = {};
+  function loadScript(url){
+    if (loadedScripts[url]) return loadedScripts[url];
+    loadedScripts[url] = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = url;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Could not load a required library. Check your connection and try again.'));
+      document.head.appendChild(script);
+    });
+    return loadedScripts[url];
+  }
+
+  async function extractFromPdf(file){
+    await loadScript(PDF_JS_URL);
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      fullText += content.items.map(item => item.str).join(' ') + '\n';
+    }
+    if (fullText.trim().length < 30){
+      throw new Error('We couldn\u2019t find readable text in this PDF (it may be a scanned image). Please paste the text manually instead.');
+    }
+    return fullText.trim();
+  }
+
+  async function extractFromDocx(file){
+    await loadScript(MAMMOTH_URL);
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await window.mammoth.extractRawText({ arrayBuffer });
+    if (!result.value || result.value.trim().length < 30){
+      throw new Error('We couldn\u2019t find readable text in this file. Please paste the text manually instead.');
+    }
+    return result.value.trim();
+  }
+
+  async function extractText(file){
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.pdf')) return extractFromPdf(file);
+    if (name.endsWith('.docx')) return extractFromDocx(file);
+    throw new Error('Please upload a PDF or Word (.docx) file, or paste your CV text directly.');
+  }
+
+  return { extractText };
+})();
+
+function wireFileUpload({ inputId, filenameId, statusId, textareaId, onExtracted }){
+  const fileInput = document.getElementById(inputId);
+  const filenameEl = document.getElementById(filenameId);
+  const statusEl = document.getElementById(statusId);
+  const textarea = document.getElementById(textareaId);
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    filenameEl.textContent = file.name;
+    statusEl.className = 'upload-status show loading';
+    statusEl.innerHTML = '<span class="upload-spinner"></span> Reading your file…';
+
+    try{
+      const text = await FileExtraction.extractText(file);
+      textarea.value = text;
+      onExtracted();
+      statusEl.className = 'upload-status show success';
+      statusEl.textContent = 'Text extracted — review it below, then continue.';
+    }catch(err){
+      statusEl.className = 'upload-status show error';
+      statusEl.textContent = err.message || 'Something went wrong reading this file. Please paste your CV text instead.';
+    }
+  });
+}
+
+/* =====================================================================
    MODULE 1: INPUT INTERFACE
    ===================================================================== */
 const jdInput = document.getElementById('jd-input');
@@ -424,6 +551,14 @@ function updateInputState(){
 }
 jdInput.addEventListener('input', updateInputState);
 cvInput.addEventListener('input', updateInputState);
+
+wireFileUpload({
+  inputId: 'cv-file-input',
+  filenameId: 'upload-filename',
+  statusId: 'upload-status',
+  textareaId: 'cv-input',
+  onExtracted: updateInputState,
+});
 
 /* =====================================================================
    MODULE 2: ANALYSIS TRIGGER

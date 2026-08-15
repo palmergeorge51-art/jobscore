@@ -370,14 +370,14 @@
       <div class="input-grid">
         <div>
           <div class="field-label"><span class="step">1</span> Paste the job description</div>
-          <p class="field-help">Include the responsibilities, requirements, qualifications and preferred skills.</p>
+          <p class="field-help">Include the responsibilities, requirements, qualifications, and preferred skills written in full sentences.</p>
           <textarea id="jd-input" placeholder="Paste the full job description here..."></textarea>
           <div class="char-count" id="jd-count">0 characters</div>
           <div class="field-error" id="jd-error">Please paste the full job description so we can identify the key requirements.</div>
         </div>
         <div>
           <div class="field-label"><span class="step">2</span> Paste your CV/resume</div>
-          <p class="field-help">Paste the text below, or upload a PDF/Word file and we'll extract it for you.</p>
+          <p class="field-help">Paste the text below, or upload a PDF/Word file and we'll extract it for you. English text works best.</p>
           <div class="upload-row">
             <label class="upload-btn" for="cv-file-input">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -395,7 +395,7 @@
 
       <div class="privacy-note">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>Your information is used only to generate your scorecard. For your privacy, avoid including sensitive personal information that isn't necessary for the analysis. Nothing is stored permanently.</span>
+        <span>Your information is used only to generate your scorecard. For your privacy, avoid including sensitive personal information that isn't necessary for the analysis. Nothing is stored permanently. For the most accurate results, submit the job description exactly as posted.</span>
       </div>
 
       <div class="submit-row">
@@ -598,13 +598,19 @@ const Extraction = (() => {
   const SKILL_DICTIONARY = {
     'Excel': ['excel', 'ms excel', 'microsoft excel', 'spreadsheets', 'pivot tables', 'vlookup'],
     'Microsoft Office': ['microsoft office', 'ms office', 'office suite', 'word and excel', 'powerpoint'],
-    'Project Management': ['project management', 'project manager', 'managing projects', 'project lead', 'pmp', 'agile', 'scrum', 'project coordination', 'project planning'],
+    'Project Management': ['project management', 'project manager', 'managing projects', 'project lead', 'pmp', 'agile', 'scrum framework', 'scrum methodology', 'project coordination', 'project planning'],
     'Data Analysis': ['data analysis', 'data analytics', 'analyzing data', 'analytics', 'data-driven', 'data interpretation'],
-    'Communication': ['communication skills', 'verbal communication', 'written communication', 'communication', 'presenting', 'presentation skills'],
+    'Communication': ['communication skills', 'verbal communication', 'written communication', 'communication', 'communicator', 'communicators', 'communicating', 'communicates', 'communicated', 'presenting', 'presentation skills'],
     'Customer Service': ['customer service', 'client service', 'customer support', 'client-facing', 'customer facing', 'customer relations'],
     'SQL': ['sql', 'mysql', 'postgresql', 'database queries', 'structured query language'],
     'Python': ['python'],
-    'JavaScript': ['javascript', 'js', 'react', 'node.js', 'node'],
+    'Cloud Computing': ['aws', 'amazon web services', 'microsoft azure', 'azure cloud', 'gcp', 'google cloud', 'cloud computing', 'cloud infrastructure'],
+    'Software Engineering': ['software engineering', 'software development', 'full stack', 'full-stack', 'backend development', 'frontend development', 'api development'],
+    'DevOps': ['devops', 'ci/cd', 'docker', 'kubernetes', 'terraform'],
+    'Git': ['git', 'github', 'gitlab', 'version control'],
+    // "React" alone collides with the ordinary verb ("quick to react to
+    // feedback"), so it requires a qualifying phrase.
+    'JavaScript': ['javascript', 'js', 'react.js', 'reactjs', 'react framework', 'node.js', 'nodejs'],
     'Leadership': ['leadership', 'leading a team', 'team lead', 'managed a team', 'people management', 'supervising staff'],
     'Sales': ['sales', 'business development', 'account management', 'closing deals', 'quota'],
     'Marketing': ['marketing', 'digital marketing', 'campaign management', 'seo', 'social media marketing'],
@@ -615,7 +621,11 @@ const Extraction = (() => {
     'Time Management': ['time management', 'prioritization', 'multitasking', 'meeting deadlines'],
     'Teamwork': ['teamwork', 'collaboration', 'cross-functional', 'team player'],
     'Public Speaking': ['public speaking', 'presenting to stakeholders', 'presentations'],
-    'Recruiting': ['recruiting', 'talent acquisition', 'hiring', 'interviewing candidates'],
+    // "Hiring" alone collides with the extremely common JD-opening phrase
+    // "We're hiring a [role]" (about the employer, not a candidate skill),
+    // so it requires a phrase that's specific to doing the hiring, not
+    // being hired for a role.
+    'Recruiting': ['recruiting', 'talent acquisition', 'hiring decisions', 'hiring managers', 'led hiring', 'full-cycle recruiting', 'interviewing candidates', 'sourcing candidates'],
     'Bookkeeping': ['bookkeeping', 'accounts payable', 'accounts receivable', 'reconciliation'],
     'Content Writing': ['content writing', 'copywriting', 'blog writing', 'editorial'],
     'Graphic Design': ['graphic design', 'adobe photoshop', 'adobe illustrator', 'figma', 'canva'],
@@ -626,13 +636,142 @@ const Extraction = (() => {
     'Training': ['training', 'onboarding', 'mentoring', 'coaching staff'],
     'Legal Compliance': ['compliance', 'regulatory', 'legal review'],
     'Research': ['research', 'market research', 'competitive analysis'],
+    'Retail Operations': ['retail operations', 'stock replenishment', 'shelf stocking', 'stocking shelves', 'store operations', 'merchandising', 'stockroom'],
+    'Cash Handling': ['cash handling', 'till operation', 'processing payments', 'point of sale', 'pos system', 'cashier'],
+    'Health & Safety Compliance': ['health and safety', 'safety procedures', 'security procedures', 'safety equipment', 'health & safety'],
+    'Age-Restricted Sales': ['age restricted', 'age-restricted', 'think 25', 'challenge 25', 'id checks', 'alcohol sales'],
+    'Shift Supervision': ['running the shift', 'shift leader', 'shift supervisor', 'covering shifts'],
+    'Live Chat Support': ['live chat', 'chat support', 'ticket triage', 'helpdesk'],
+    'Escalation Handling': ['de-escalation', 'de escalation', 'escalation handling', 'conflict resolution'],
+
+    // Healthcare
+    'Patient Care': ['patient care', 'bedside manner', 'patient assessment', 'vital signs'],
+    'Nursing': ['registered nurse', 'licensed practical nurse', 'nursing care', 'clinical nursing'],
+    'Medical Records / EHR': ['electronic health records', 'ehr', 'emr', 'electronic medical records', 'epic systems', 'cerner'],
+    'Phlebotomy': ['phlebotomy', 'blood draw', 'venipuncture'],
+    'CPR / First Aid Certification': ['cpr certified', 'cpr certification', 'bls certification', 'first aid certified', 'basic life support'],
+    'Medical Coding & Billing': ['medical coding', 'medical billing', 'icd-10', 'cpt coding'],
+
+    // Legal
+    'Litigation': ['litigation', 'trial preparation', 'court filings'],
+    'Contract Drafting': ['contract drafting', 'drafting contracts', 'contract negotiation'],
+    'Legal Research': ['legal research', 'westlaw', 'lexisnexis'],
+    'Paralegal Support': ['paralegal', 'legal assistant', 'case management'],
+
+    // Education
+    'Curriculum Development': ['curriculum development', 'lesson planning', 'curriculum design'],
+    'Classroom Management': ['classroom management', 'classroom instruction'],
+    'Teaching': ['teaching', 'instructing students', 'tutoring', 'lecturing'],
+
+    // Engineering / CAD / Manufacturing
+    'CAD Software': ['autocad', 'solidworks', 'revit', 'catia', 'computer-aided design'],
+    'MATLAB': ['matlab', 'simulink'],
+    'Manufacturing Operations': ['manufacturing operations', 'assembly line', 'production line', 'lean manufacturing', 'six sigma'],
+    'Welding': ['welding', 'mig welding', 'tig welding', 'certified welder'],
+    'Forklift Operation': ['forklift operation', 'forklift certified', 'forklift certification'],
+    'Electrical Work': ['electrical wiring', 'licensed electrician', 'electrical installation'],
+
+    // Finance / Accounting
+    'Financial Modeling': ['financial modeling', 'financial forecasting', 'valuation modeling'],
+    'Auditing': ['auditing', 'internal audit', 'external audit'],
+    'Tax Preparation': ['tax preparation', 'tax filing', 'tax compliance'],
+    'Accounting Software': ['quickbooks', 'sap erp', 'sap software', 'sap system', 'netsuite', 'xero'],
+
+    // IT / Software (beyond what's already covered)
+    'Java': ['java programming', 'java developer', 'java'],
+    'C++/C#': ['c++', 'c#', '.net'],
+    'Networking': ['network administration', 'networking protocols', 'tcp/ip', 'network security'],
+    'Cybersecurity': ['cybersecurity', 'penetration testing', 'information security', 'infosec'],
+    'Linux': ['linux administration', 'linux systems', 'unix systems'],
+
+    // Creative / Media
+    'Video Editing': ['video editing', 'adobe premiere', 'premiere pro', 'final cut pro', 'after effects'],
+    'UX/UI Design': ['ux design', 'ui design', 'user experience design', 'wireframing', 'prototyping'],
+
+    // Hospitality / Food Service
+    'Food Safety': ['food safety', 'food handler', 'servsafe', 'haccp'],
+    'Housekeeping': ['housekeeping', 'room turnover', 'hotel housekeeping'],
+
+    // HR
+    'Payroll Administration': ['payroll administration', 'payroll processing', 'adp payroll'],
+    // "Workday" alone collides with the ordinary compound word ("a
+    // typical workday"), so it requires the software-specific phrase.
+    'HRIS Systems': ['workday software', 'workday hris', 'bamboohr', 'hris system', 'adp workforce'],
+    'Employee Relations': ['employee relations', 'labor relations'],
+
+    // Languages
+    'Bilingual / Multilingual': ['bilingual', 'multilingual', 'fluent in spanish', 'fluent in french', 'fluent in mandarin'],
+
+    // Data / AI / ML — one of the fastest-growing categories in hiring
+    'Machine Learning / AI': ['machine learning', 'deep learning', 'artificial intelligence', 'neural networks', 'tensorflow', 'pytorch', 'generative ai', 'large language models'],
+    'Data Visualization': ['power bi', 'tableau software', 'data visualization', 'looker', 'qlik'],
+    'R Programming': ['r programming', 'r language', 'rstudio', 'r studio'],
+
+    // Design
+    'Figma': ['figma'],
+
+    // Web / Software development
+    'TypeScript': ['typescript'],
+    'HTML & CSS': ['html', 'css', 'html5', 'css3'],
+    // "Angular" alone collides with the ordinary word (e.g. "angular
+    // design", "angular shapes") on design/creative resumes, so it
+    // requires the more specific framework name.
+    'Frontend Frameworks': ['vue.js', 'vuejs', 'angular.js', 'angularjs', 'next.js', 'nextjs', 'svelte'],
+    // "Swift" alone is an ordinary English word ("swift and efficient"),
+    // so it requires a qualifying phrase instead of matching bare.
+    'Mobile App Development': ['ios development', 'android development', 'swift programming', 'kotlin', 'react native', 'mobile app development'],
+    // "Selenium" alone collides with the nutrient/mineral (nutrition,
+    // healthcare resumes), so it requires the testing-specific phrase.
+    'Software Testing / QA Automation': ['test automation', 'automated testing', 'unit testing', 'selenium testing', 'qa automation'],
+    // "Scrum" alone collides with the rugby term, so it's paired with
+    // "master"/"certified" to stay specific to the project-management role.
+    'Scrum Master': ['scrum master', 'certified scrummaster', 'csm certification'],
+    // "Asana" alone collides with the yoga term, so it requires
+    // "software"/"app" to distinguish it from a fitness/wellness resume.
+    'Project Management Tools': ['jira', 'trello', 'monday.com', 'asana software', 'asana app', 'basecamp'],
+
+    // Sales
+    'Cold Calling / Outbound Sales': ['cold calling', 'outbound prospecting', 'lead generation', 'cold outreach'],
+
+    // Marketing
+    'Paid Media Advertising': ['google ads', 'meta ads', 'facebook ads', 'ppc advertising', 'paid media', 'programmatic advertising'],
+    'Google Analytics': ['google analytics', 'ga4', 'web analytics'],
+    'Content Strategy': ['content strategy', 'editorial calendar', 'content planning'],
+
+    // Skilled trades
+    'OSHA Safety Certification': ['osha certified', 'osha certification', 'osha compliance', 'osha 10', 'osha 30'],
+    'Plumbing': ['plumbing', 'licensed plumber', 'pipefitting'],
+    'Carpentry': ['carpentry', 'woodworking', 'framing carpentry'],
+    'HVAC': ['hvac', 'hvac technician', 'hvac certified', 'heating and cooling'],
+    'Heavy Equipment Operation': ['heavy equipment operation', 'crane operation', 'heavy machinery operation', 'excavator operation'],
+
+    // Hospitality
+    'Bartending': ['bartending', 'bartender', 'mixology', 'craft cocktails'],
+
+    // Real estate
+    'Real Estate License': ['real estate license', 'licensed realtor', 'licensed real estate agent'],
+    'Property Management': ['property management', 'lease administration', 'tenant relations'],
+
+    // Social media (distinct from general Marketing)
+    'Social Media Management': ['social media management', 'community management', 'content calendar management'],
   };
 
   // Words that signal a requirement is MANDATORY vs PREFERRED
   const MANDATORY_SIGNALS = ['required', 'must have', 'must be', 'requirement', 'essential', 'minimum qualification', 'need to have', 'mandatory'];
   const PREFERRED_SIGNALS = ['preferred', 'nice to have', 'plus', 'bonus', 'ideally', 'a plus', 'desirable', 'advantageous'];
 
-  const DEGREE_TERMS = ["bachelor's", 'bachelor', "master's", 'master', 'mba', 'phd', 'doctorate', 'degree', 'diploma', 'associate degree'];
+  // International degree formats vary a lot by country (US uses "B.S.",
+  // UK/Commonwealth commonly drops the periods: "BSc", "MSc"), so both
+  // styles are included. A few globally-common abbreviations (MPH, MD,
+  // DO, JD) are deliberately left out — they're also common English words
+  // or well-known non-degree abbreviations (miles-per-hour, Maryland,
+  // initials, the word "do"), so including them bare would create false
+  // positives. Those are still caught by the generic "master"/"doctorate"
+  // terms if spelled out.
+  const DEGREE_TERMS = ["bachelor's", 'bachelor', "master's", 'master', 'mba', 'phd', 'ph.d', 'doctorate', 'degree', 'diploma', 'associate degree',
+    'b.s.', 'b.a.', 'b.sc', 'b.eng', 'b.tech', 'bsc', 'beng', 'bba', 'bfa', 'b.ed', 'llb',
+    'm.s.', 'm.a.', 'm.sc', 'm.eng', 'm.tech', 'm.b.a', 'msc', 'meng', 'mfa', 'm.ed', 'mpa', 'edd', 'psyd',
+    'dds', 'dvm', 'pgce', 'nvq'];
   const CERT_TERMS = ['certification', 'certified', 'license', 'licensed', 'accreditation', 'pmp', 'cpa', 'cfa', 'shrm'];
 
   const ACHIEVEMENT_PATTERNS = [
@@ -652,6 +791,28 @@ const Extraction = (() => {
     return (text || '').split(/(?<=[.!?\n])\s+/).map(s => s.trim()).filter(Boolean);
   }
 
+  // Whole-word/phrase match against already-normalized text. Using a plain
+  // substring check (text.includes('excel')) would false-positive on any
+  // word that merely contains those letters — e.g. "excel" inside
+  // "excellent", "lead" inside "leadership", "master" inside "mastered".
+  // This anchors the match so only the actual word or phrase counts, not
+  // a substring buried inside a longer word. Uses lookaround instead of
+  // \b because \b requires a word-character/non-word-character transition
+  // — that breaks for phrases ending in punctuation, e.g. "b.s." followed
+  // by a space is non-word-to-non-word, so \b silently fails to match
+  // right after the trailing period. Lookaround checks "not another
+  // letter/digit" instead, which works correctly either way.
+  function escapeRegex(str){
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  const wordBoundaryCache = {};
+  function containsPhrase(normalizedText, phrase){
+    if (!wordBoundaryCache[phrase]){
+      wordBoundaryCache[phrase] = new RegExp('(?<![a-zA-Z0-9])' + escapeRegex(phrase) + '(?![a-zA-Z0-9])', 'i');
+    }
+    return wordBoundaryCache[phrase].test(normalizedText);
+  }
+
   // Find which dictionary skills are mentioned in a text, and whether the
   // mention looks mandatory or preferred (for JD) — returns array of
   // { skill, mandatory, evidenceSentence }
@@ -663,17 +824,17 @@ const Extraction = (() => {
     for (const [canonical, variants] of Object.entries(SKILL_DICTIONARY)){
       let matchedVariant = null;
       for (const v of variants){
-        if (norm.includes(v)){ matchedVariant = v; break; }
+        if (containsPhrase(norm, v)){ matchedVariant = v; break; }
       }
       if (!matchedVariant) continue;
 
       // find the sentence containing it for context / mandatory detection
-      let evidenceSentence = sentences.find(s => normalize(s).includes(matchedVariant)) || '';
+      let evidenceSentence = sentences.find(s => containsPhrase(normalize(s), matchedVariant)) || '';
       let mandatory = true;
       if (opts.detectPriority){
         const sNorm = normalize(evidenceSentence);
-        const isPreferred = PREFERRED_SIGNALS.some(sig => sNorm.includes(sig));
-        const isMandatory = MANDATORY_SIGNALS.some(sig => sNorm.includes(sig));
+        const isPreferred = PREFERRED_SIGNALS.some(sig => containsPhrase(sNorm, sig));
+        const isMandatory = MANDATORY_SIGNALS.some(sig => containsPhrase(sNorm, sig));
         mandatory = isMandatory || !isPreferred; // default to mandatory unless clearly preferred
       }
       found.push({ skill: canonical, mandatory, evidenceSentence });
@@ -702,16 +863,32 @@ const Extraction = (() => {
 
   function findEducationSignals(text){
     const norm = normalize(text);
-    const degrees = DEGREE_TERMS.filter(t => norm.includes(t));
-    const certs = CERT_TERMS.filter(t => norm.includes(t));
+    const degrees = DEGREE_TERMS.filter(t => containsPhrase(norm, t));
+    const certs = CERT_TERMS.filter(t => containsPhrase(norm, t));
     return { degrees, certs };
   }
 
   // Extract meaningful multi-word phrases / keywords from JD beyond the
   // fixed skill dictionary — simple frequency + stopword filtering.
-  const STOPWORDS = new Set(['the','and','for','with','you','your','are','will','have','has','this','that','from','our','a','an','to','of','in','on','as','is','be','or','we','at','by','about','across','role','job','looking','candidate','ideal','who','it','their','they','someone','amazing','seeking','help','helping','organization','thrive','grow','growing','dynamic','changing','fast-paced','environment','lots','opportunity','right','person','fit','culturally','culture','great','good','strong','excellent','skills','skill','ability','able','work','working','team','teams','experience','years','including','other','also','such','into','can','all','more','than','most','best','new','you\'ll','we\'re','including','various','many','some','get','make','take','provide','ensure','including']);
+  const STOPWORDS = new Set(['the','and','for','with','you','your','are','will','have','has','this','that','from','our','a','an','to','of','in','on','as','is','be','or','we','at','by','about','across','role','job','looking','candidate','ideal','who','it','their','they','someone','amazing','seeking','help','helping','organization','thrive','grow','growing','dynamic','changing','fast-paced','environment','lots','opportunity','right','person','fit','culturally','culture','great','good','strong','excellent','skills','skill','ability','able','work','working','team','teams','experience','years','including','other','also','such','into','can','all','more','than','most','best','new','you\'ll','we\'re','including','various','many','some','get','make','take','provide','ensure','including',
+    // Common corporate/job-posting boilerplate — appears constantly in
+    // "about us", benefits, and culture sections, and is essentially never
+    // a real skill or requirement someone should be checking their CV for.
+    'colleague','colleagues','benefit','benefits','welcome','welcoming','workplace','values','community','communities','offer','offers','flexible','diversity','inclusion','inclusive','proud','committed','click','please','subsidiary','organisation','career','careers','network','networks','feedback','safe','apply','application','applications','vacancy','withdraw','closing','date','encourage','submit','information','further','recruitment','process','adjustments','accessible','supportive','unique','backgrounds','perspectives','treated','fairly','respect','heart','everyday','local','national','partnering','difference','chance','simply','local','stop','store','always','part']);
+  const BOILERPLATE_SENTENCE_SIGNALS = [
+    'flexible working', 'diversity and inclusion', 'diversity & inclusion', 'colleague networks',
+    'we are proud', 'we\'re proud', 'committed to', 'benefits we offer', 'careers page',
+    'community involvement', 'good causes', 'reduce food waste', 'disability confident',
+    'reasonable adjustments', 'click here', 'right to withdraw', 'as such we would',
+    'part of the tesco group', 'what is in it for you', 'making everyday life easier',
+  ];
   function extractTopKeywords(jdText, limit = 15){
-    const norm = normalize(jdText).replace(/[^\w\s%$]/g, ' ');
+    const sentences = splitSentences(jdText).filter(s => {
+      const sNorm = normalize(s);
+      return !BOILERPLATE_SENTENCE_SIGNALS.some(sig => sNorm.includes(sig));
+    });
+    const filteredText = sentences.join(' ');
+    const norm = normalize(filteredText).replace(/[^\w\s%$]/g, ' ');
     const words = norm.split(' ').filter(w => w.length > 3 && !STOPWORDS.has(w));
     const freq = {};
     for (const w of words){ freq[w] = (freq[w]||0) + 1; }
@@ -721,10 +898,59 @@ const Extraction = (() => {
     return sorted.slice(0, limit);
   }
 
+  // Catches skills/qualifications that aren't in the curated SKILL_DICTIONARY
+  // at all — which matters a lot for niche or industry-specific roles (e.g.
+  // fisheries, aquaculture, welding sub-specialties) that a fixed list can
+  // never fully anticipate. Instead of matching against a hand-picked list,
+  // this looks for grammar that signals "what follows is a real requirement"
+  // — "experience in X", "knowledge of X", "certified in X" — and extracts
+  // X directly from the job description's own words. Deliberately excludes
+  // vaguer duty-language triggers like "responsible for", since testing
+  // showed that pattern pulls in generic filler, not named skills.
+  const REQUIREMENT_STOP_LOOKAHEAD = '(?=[,.;:]|\\band\\b|\\bor\\b|\\brequired\\b|\\bpreferred\\b|\\ba plus\\b|\\bis a plus\\b|\\bnice to have\\b|\\bdesirable\\b|\\bessential\\b|\\bmandatory\\b|\\bbeneficial\\b|\\bnecessary\\b|$)';
+  const REQUIREMENT_TRIGGER_PATTERNS = [
+    new RegExp('\\bexperience (?:with|in|using)\\s+([a-zA-Z][a-zA-Z0-9 \\-\\/&\']{2,40}?)' + REQUIREMENT_STOP_LOOKAHEAD, 'gi'),
+    new RegExp('\\bproficiency (?:with|in)\\s+([a-zA-Z][a-zA-Z0-9 \\-\\/&\']{2,40}?)' + REQUIREMENT_STOP_LOOKAHEAD, 'gi'),
+    new RegExp('\\bknowledge of\\s+([a-zA-Z][a-zA-Z0-9 \\-\\/&\']{2,40}?)' + REQUIREMENT_STOP_LOOKAHEAD, 'gi'),
+    new RegExp('\\bbackground in\\s+([a-zA-Z][a-zA-Z0-9 \\-\\/&\']{2,40}?)' + REQUIREMENT_STOP_LOOKAHEAD, 'gi'),
+    new RegExp('\\bskilled (?:with|in)\\s+([a-zA-Z][a-zA-Z0-9 \\-\\/&\']{2,40}?)' + REQUIREMENT_STOP_LOOKAHEAD, 'gi'),
+    new RegExp('\\bcertified in\\s+([a-zA-Z][a-zA-Z0-9 \\-\\/&\']{2,40}?)' + REQUIREMENT_STOP_LOOKAHEAD, 'gi'),
+    new RegExp('\\bfamiliarity with\\s+([a-zA-Z][a-zA-Z0-9 \\-\\/&\']{2,40}?)' + REQUIREMENT_STOP_LOOKAHEAD, 'gi'),
+    new RegExp('\\bqualified in\\s+([a-zA-Z][a-zA-Z0-9 \\-\\/&\']{2,40}?)' + REQUIREMENT_STOP_LOOKAHEAD, 'gi'),
+  ];
+  function extractRequirementPhrases(jdText){
+    const sentences = splitSentences(jdText);
+    const found = [];
+    for (const sentence of sentences){
+      const sNorm = normalize(sentence);
+      if (BOILERPLATE_SENTENCE_SIGNALS.some(sig => sNorm.includes(sig))) continue;
+      for (const pattern of REQUIREMENT_TRIGGER_PATTERNS){
+        pattern.lastIndex = 0;
+        let match;
+        while ((match = pattern.exec(sentence)) !== null){
+          let cleaned = match[1].trim().replace(/^(a|an|the|our|your)\s+/i, '').trim();
+          const wordCount = cleaned.split(/\s+/).length;
+          if (wordCount >= 1 && wordCount <= 6 && cleaned.length >= 3){
+            const mandatory = MANDATORY_SIGNALS.some(sig => sNorm.includes(sig)) || !PREFERRED_SIGNALS.some(sig => sNorm.includes(sig));
+            found.push({ phrase: cleaned, mandatory });
+          }
+        }
+      }
+    }
+    // dedupe case-insensitively, keep first occurrence
+    const seen = new Set();
+    const deduped = [];
+    for (const f of found){
+      const key = f.phrase.toLowerCase();
+      if (!seen.has(key)){ seen.add(key); deduped.push(f); }
+    }
+    return deduped;
+  }
+
   return {
     normalize, splitSentences, findSkillsInText, findAchievements,
     countSentencesWithAchievements, findEducationSignals, extractTopKeywords,
-    MANDATORY_SIGNALS, PREFERRED_SIGNALS
+    extractRequirementPhrases, containsPhrase, MANDATORY_SIGNALS, PREFERRED_SIGNALS
   };
 })();
 
@@ -744,10 +970,38 @@ const ScoringEngine = (() => {
 
     // Cap to the most important ~6-8 skills so scoring reflects "important skills", not every dictionary hit
     const importantJdSkills = jdSkills.slice(0, 8);
-    const matched = importantJdSkills.filter(s => cvSkillNames.has(s.skill));
-    const missing = importantJdSkills.filter(s => !cvSkillNames.has(s.skill));
+    const curatedMatched = importantJdSkills.filter(s => cvSkillNames.has(s.skill));
+    const curatedMissing = importantJdSkills.filter(s => !cvSkillNames.has(s.skill));
+    const curatedNames = new Set(importantJdSkills.map(s => s.skill.toLowerCase()));
 
-    const total = importantJdSkills.length;
+    // Beyond the curated dictionary, also catch requirements the JD states
+    // explicitly ("experience in X", "knowledge of X") even when X isn't
+    // one of our ~100 hand-picked categories — this is what lets a niche
+    // or industry-specific skill (e.g. "fish stock management") show up
+    // correctly instead of silently vanishing just because it wasn't
+    // anticipated in advance.
+    const cvNorm = Extraction.normalize(cvText);
+    const extracted = Extraction.extractRequirementPhrases(jdText)
+      // skip anything that's essentially a duplicate of a curated skill
+      // already accounted for above, so nothing gets double-counted
+      .filter(e => {
+        const key = e.phrase.toLowerCase();
+        return ![...curatedNames].some(name => key.includes(name) || name.includes(key));
+      })
+      .slice(0, 6); // cap so a requirement-dense JD can't overwhelm the list
+
+    const extractedResolved = extracted.map(e => ({
+      skill: e.phrase,
+      mandatory: e.mandatory,
+      matched: Extraction.containsPhrase(cvNorm, e.phrase.toLowerCase()),
+    }));
+    const extractedMatched = extractedResolved.filter(e => e.matched);
+    const extractedMissing = extractedResolved.filter(e => !e.matched);
+
+    const matched = [...curatedMatched, ...extractedMatched.map(e => ({ skill: e.skill, mandatory: e.mandatory }))];
+    const missing = [...curatedMissing, ...extractedMissing.map(e => ({ skill: e.skill, mandatory: e.mandatory }))];
+
+    const total = importantJdSkills.length + extractedResolved.length;
     const matchedCount = matched.length;
     const ratio = total > 0 ? matchedCount / total : null;
     const points = ratio === null ? 15 : Math.round(ratio * 30); // if we truly can't identify any, don't invent — give neutral midpoint
@@ -756,6 +1010,11 @@ const ScoringEngine = (() => {
       points, max: 30, total, matchedCount,
       matched: matched.map(s => s.skill),
       missing: missing.map(s => s.skill),
+      // Split by how the JD actually signaled importance, so fix
+      // recommendations can prioritize real requirement gaps over
+      // nice-to-haves rather than treating every miss the same.
+      missingMandatory: missing.filter(s => s.mandatory).map(s => s.skill),
+      missingPreferred: missing.filter(s => !s.mandatory).map(s => s.skill),
       identifiable: total > 0,
     };
   }
@@ -775,8 +1034,8 @@ const ScoringEngine = (() => {
     const seniorityWords = ['senior', 'lead', 'manager', 'director', 'head of', 'principal', 'junior', 'entry level', 'intern'];
     const jdNorm = Extraction.normalize(jdText);
     const cvNorm = Extraction.normalize(cvText);
-    const jdSeniority = seniorityWords.filter(w => jdNorm.includes(w));
-    const cvSeniority = seniorityWords.filter(w => cvNorm.includes(w));
+    const jdSeniority = seniorityWords.filter(w => Extraction.containsPhrase(jdNorm, w));
+    const cvSeniority = seniorityWords.filter(w => Extraction.containsPhrase(cvNorm, w));
     const seniorityAligned = jdSeniority.length === 0 || jdSeniority.some(w => cvSeniority.includes(w)) ||
       (jdSeniority.some(w => ['senior','lead','manager','director','head of','principal'].includes(w)) &&
        cvSeniority.some(w => ['senior','lead','manager','director','head of','principal'].includes(w)));
@@ -812,8 +1071,8 @@ const ScoringEngine = (() => {
     }
 
     // is it stated as mandatory or preferred?
-    const degreeContext = Extraction.splitSentences(jdText).find(s => jdEdu.degrees.some(d => Extraction.normalize(s).includes(d))) || '';
-    const isPreferredDegree = Extraction.PREFERRED_SIGNALS.some(sig => Extraction.normalize(degreeContext).includes(sig));
+    const degreeContext = Extraction.splitSentences(jdText).find(s => jdEdu.degrees.some(d => Extraction.containsPhrase(Extraction.normalize(s), d))) || '';
+    const isPreferredDegree = Extraction.PREFERRED_SIGNALS.some(sig => Extraction.containsPhrase(Extraction.normalize(degreeContext), sig));
 
     const hasDegree = cvEdu.degrees.length > 0;
     const hasCert = cvEdu.certs.length > 0;
@@ -847,8 +1106,8 @@ const ScoringEngine = (() => {
   function scoreKeywords(jdText, cvText){
     const keywords = Extraction.extractTopKeywords(jdText, 15);
     const cvNorm = Extraction.normalize(cvText);
-    const found = keywords.filter(k => cvNorm.includes(k));
-    const missing = keywords.filter(k => !cvNorm.includes(k));
+    const found = keywords.filter(k => Extraction.containsPhrase(cvNorm, k));
+    const missing = keywords.filter(k => !Extraction.containsPhrase(cvNorm, k));
     const ratio = keywords.length > 0 ? found.length / keywords.length : null;
     const points = ratio === null ? 8 : Math.round(ratio * 15);
 
@@ -952,21 +1211,15 @@ const ScoringEngine = (() => {
       }
     }
 
-    // Keywords
-    if (keywords.total > 0){
-      if (keywords.foundCount >= keywords.total * 0.6){
-        working.push({
-          title: `${keywords.foundCount}/${keywords.total} important keywords found`,
-          body: 'Your CV naturally contains most of the important language used in this job description.'
-        });
-      }
-      if (keywords.missing.length > 0){
-        hurting.push({
-          title: `${keywords.missing.length} important keyword${keywords.missing.length === 1 ? ' is' : 's are'} missing`,
-          body: 'Several terms used in the job description are not clearly represented in your CV. Only add these if they truthfully reflect your experience.'
-        });
-      }
-    }
+    // Note: no keyword-based "working" or "hurting" finding here. The
+    // frequency-based keyword extraction (ordinary verbs and connector
+    // words like "using", "perform", "safely") isn't reliable enough to
+    // present as a meaningful positive or negative signal on its own —
+    // the genuinely important requirement gaps are covered by the
+    // skills/education/experience checks above and the requirement-phrase
+    // extraction feeding into Skills Match, which is anchored to explicit
+    // "experience in X" / "knowledge of X" language instead of raw
+    // word frequency.
 
     // Achievements
     if (achievements.evidenceCount >= 3){
@@ -986,14 +1239,20 @@ const ScoringEngine = (() => {
 
   function buildFixes(skills, experience, education, keywords, achievements, cvText){
     const fixes = [];
+    const usedSkills = new Set(); // avoid mentioning the same missing skill in two different fix slots
 
-    // 1. Missing high-priority skill -> ADD
-    if (skills.missing.length > 0){
+    // 1. Missing MANDATORY skills first — these are requirements the JD
+    // explicitly signaled as required/essential, not just nice-to-haves.
+    // One fix per missing mandatory skill, capped so the list stays varied
+    // rather than becoming 5 near-identical "add this skill" lines.
+    const mandatoryToFix = skills.missingMandatory.slice(0, 3);
+    mandatoryToFix.forEach(skill => {
       fixes.push({
         priority: 'High', action: 'Add',
-        text: `If you genuinely have experience with ${skills.missing[0]}, make it explicit in your skills or experience section — it appears to be an important requirement for this role.`
+        text: `If you genuinely have experience with ${skill}, make it explicit in your skills or experience section — it's listed as a required part of this role.`
       });
-    }
+      usedSkills.add(skill);
+    });
 
     // 2. Weak achievements -> QUANTIFY
     if (achievements.mostlyResponsibilities){
@@ -1005,12 +1264,13 @@ const ScoringEngine = (() => {
 
     // 3. Experience not visible -> MENTION or REWRITE
     if (experience.level === 'weak' || experience.level === 'moderate'){
-      const focusSkill = skills.missing[1] || skills.matched[0];
+      const focusSkill = skills.missingMandatory.find(s => !usedSkills.has(s)) || skills.matched[0];
       if (focusSkill){
         fixes.push({
           priority: experience.level === 'weak' ? 'High' : 'Medium', action: 'Mention',
           text: `Make your ${focusSkill.toLowerCase()} experience more visible if you have it — it's a meaningful part of this role's responsibilities.`
         });
+        if (skills.missingMandatory.includes(focusSkill)) usedSkills.add(focusSkill);
       } else {
         fixes.push({
           priority: 'Medium', action: 'Rewrite',
@@ -1019,15 +1279,7 @@ const ScoringEngine = (() => {
       }
     }
 
-    // 4. Missing keywords -> MENTION (truthfully)
-    if (keywords.missing.length > 0){
-      fixes.push({
-        priority: 'Medium', action: 'Mention',
-        text: `Consider naturally incorporating terms like "${keywords.missing.slice(0,2).join('", "')}" if they genuinely reflect your background — don't add them just to match the posting.`
-      });
-    }
-
-    // 5. Education gap -> ADD or MENTION
+    // 4. Education gap -> ADD or MENTION
     if (education.identifiable && education.requiresDegree && !education.hasDegree){
       fixes.push({
         priority: education.isPreferredDegree ? 'Low' : 'High', action: 'Mention',
@@ -1036,6 +1288,20 @@ const ScoringEngine = (() => {
           : 'If you hold the required degree or an equivalent qualification, make sure it is clearly listed near the top of your CV.'
       });
     }
+
+    // 5. Missing PREFERRED skills — real requirement gaps, just lower
+    // stakes than mandatory ones, so lower priority. Also covers any
+    // remaining missing mandatory skills that didn't get a slot above, so
+    // nothing important gets dropped if there were more than 3.
+    const remainingMandatory = skills.missingMandatory.filter(s => !usedSkills.has(s));
+    const preferredToFix = [...remainingMandatory, ...skills.missingPreferred.filter(s => !usedSkills.has(s))].slice(0, 2);
+    preferredToFix.forEach(skill => {
+      fixes.push({
+        priority: 'Medium', action: 'Mention',
+        text: `If you have experience with ${skill}, consider mentioning it — it's relevant to this role, even if not strictly required.`
+      });
+      usedSkills.add(skill);
+    });
 
     // Fallback pool — always-legitimate, generic-but-truthful advice used
     // to top up to 5 recommendations when specific gaps run out.
@@ -1203,25 +1469,6 @@ const ResultsRenderer = (() => {
             </div>` : `<p class="empty-note">No major skill gaps identified.</p>`}
           </div>
         </div>
-      </div>
-
-      <div class="section">
-        <div class="section-head"><h3>Important Keywords</h3></div>
-        <div class="two-col">
-          <div class="col-card matched">
-            <h4>Found in Your CV</h4>
-            ${breakdown.keywords.found.length ? `
-            <div class="chip-list">${breakdown.keywords.found.slice(0,10).map(k => `<div class="chip">${iconCheck('var(--good)')} ${escapeHtml(k)}</div>`).join('')}</div>`
-            : `<p class="empty-note">We couldn't confidently identify this requirement from the job description.</p>`}
-          </div>
-          <div class="col-card missing">
-            <h4>Missing or Unclear</h4>
-            ${breakdown.keywords.missing.length ? `
-            <div class="chip-list">${breakdown.keywords.missing.map(k => `<div class="chip">${iconWarn('var(--warn)')} ${escapeHtml(k)}</div>`).join('')}</div>`
-            : `<p class="empty-note">No major keyword gaps identified.</p>`}
-          </div>
-        </div>
-        <p class="kw-note">Only add these terms if they accurately describe your real skills or experience.</p>
       </div>
 
       ${experienceExplanations.length ? `

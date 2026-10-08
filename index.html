@@ -339,24 +339,25 @@
   .action-plan .eyebrow{ font-size:11.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#9BA6C6; margin-bottom:10px; }
   .action-plan p{ font-family:'Source Serif 4', serif; font-size:19px; line-height:1.5; margin:0; max-width:560px; margin:0 auto; }
 
-  .bonus-card{
-    display:flex; align-items:center; gap:16px;
-    background:var(--paper-dim); border:1px dashed var(--line); border-radius:var(--radius);
-    padding:20px 24px; margin-top:24px;
+  /* Resume + cover letter prompt section */
+  .gen-intro{ font-size:14.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 18px; }
+  .prompt-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin-bottom:16px;
   }
-  .bonus-icon{ flex-shrink:0; color:var(--ink-soft); }
-  .bonus-body{ flex:1; min-width:0; }
-  .bonus-body h4{ margin:0 0 3px; font-size:14.5px; font-weight:700; color:var(--ink); }
-  .bonus-body p{ margin:0; font-size:13px; color:var(--ink-soft); line-height:1.4; }
-  .bonus-link{
-    flex-shrink:0; font-size:13.5px; font-weight:700; color:var(--ink);
-    text-decoration:none; white-space:nowrap; padding:8px 14px;
-    border:1.5px solid var(--line); border-radius:8px; transition:border-color .15s ease;
+  .prompt-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .prompt-head h4{ margin:0; font-size:15px; font-weight:700; color:var(--ink); }
+  .copy-btn{
+    appearance:none; cursor:pointer; font-family:'Inter',sans-serif; font-size:12.5px; font-weight:700;
+    color:var(--ink); background:var(--paper-dim); border:1.5px solid var(--line); border-radius:8px;
+    padding:7px 14px; transition:border-color .15s ease, background .15s ease;
   }
-  .bonus-link:hover{ border-color:var(--ink); }
-  @media (max-width:560px){
-    .bonus-card{ flex-direction:column; align-items:flex-start; text-align:left; }
-    .bonus-link{ align-self:stretch; text-align:center; }
+  .copy-btn:hover{ border-color:var(--ink); }
+  .copy-btn.copied{ background:var(--good-bg); border-color:#CFE8DD; color:var(--good); }
+  .prompt-text{
+    margin:0; white-space:pre-wrap; word-wrap:break-word; font-family:'Inter',sans-serif;
+    font-size:13.5px; line-height:1.6; color:var(--ink-soft);
+    background:var(--paper-dim); border-radius:var(--radius-sm); padding:16px 18px;
   }
 
   .restart-row{ text-align:center; margin-top:44px; }
@@ -415,7 +416,7 @@
 
       <div class="privacy-note">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>Your information is used only to generate your scorecard. For your privacy, avoid including sensitive personal information that isn't necessary for the analysis. Nothing is stored permanently. For the most accurate results, submit both texts in English and in full sentences — the job description exactly as posted works best.</span>
+        <span>Your information is used only to generate your scorecard. For your privacy, nothing is stored permanently. For the most accurate results, submit the job description exactly as posted.</span>
       </div>
 
       <div class="submit-row">
@@ -1386,6 +1387,46 @@ const ScoringEngine = (() => {
    ===================================================================== */
 const ResultsRenderer = (() => {
 
+  // Prompt text shown on the results page. Kept as plain strings so the
+  // copy buttons copy exactly what is displayed.
+  const PROMPT_RESUME = [
+    "You are a resume optimization assistant. I will give you my resume and a job description. Your job is to:",
+    "",
+    "1. Rewrite my resume so it uses the job description's language and surfaces the matching keywords naturally, using only real experience I've listed. Do not invent titles, numbers, tools, or skills I did not mention.",
+    "2. Keep my original achievements intact, just reworded and reordered for relevance.",
+    "3. Produce the rewritten resume as a downloadable PDF file, formatted cleanly and ready to submit.",
+    "",
+    "Rules:",
+    "- Do not fabricate any experience, metric, tool, or title.",
+    "- Flag clearly if there is a real gap you cannot bridge honestly, instead of forcing a fake match.",
+    "- Keep tone professional, not overly salesy.",
+    "- Do not use em dashes anywhere. Use commas, periods, or parentheses instead.",
+    "",
+    "Here is the job description:",
+    "[PASTE JOB DESCRIPTION HERE]"
+  ].join("\n");
+
+  const PROMPT_COVER = "Now write a short, tailored cover letter (under 200 words) for the same job description, using my actual background from the resume above. Echo the job description's priorities and keywords naturally. Do not fabricate any experience, metric, tool, or title. Do not use em dashes; use commas, periods, or parentheses instead. Produce it as its own separate downloadable PDF file.";
+
+  function copyText(text){
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise((resolve, reject) => {
+      try{
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        ok ? resolve() : reject(new Error('copy failed'));
+      }catch(e){ reject(e); }
+    });
+  }
+
   function iconCheck(color){
     return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
   }
@@ -1525,6 +1566,27 @@ const ResultsRenderer = (() => {
         <p>${escapeHtml(actionPlan)}</p>
       </div>
 
+      <div class="section">
+        <div class="section-head"><h3>Resume and Cover Letter PDF Generator</h3></div>
+        <p class="gen-intro">Run Prompt 1 first with your resume and the job description. Once the resume PDF comes back, run Prompt 2 in the same chat to generate a separate cover letter PDF. Upload your resume file before the prompt.</p>
+
+        <div class="prompt-card">
+          <div class="prompt-head">
+            <h4>Prompt 1: Resume Match and Rewrite</h4>
+            <button class="copy-btn" data-prompt="p1" type="button">Copy prompt</button>
+          </div>
+          <pre class="prompt-text">${escapeHtml(PROMPT_RESUME)}</pre>
+        </div>
+
+        <div class="prompt-card">
+          <div class="prompt-head">
+            <h4>Prompt 2: Cover Letter (send after the resume comes back)</h4>
+            <button class="copy-btn" data-prompt="p2" type="button">Copy prompt</button>
+          </div>
+          <pre class="prompt-text">${escapeHtml(PROMPT_COVER)}</pre>
+        </div>
+      </div>
+
       <div class="restart-row">
         <button class="btn btn-ghost" id="start-over-btn">Analyze a different application</button>
       </div>
@@ -1539,6 +1601,20 @@ const ResultsRenderer = (() => {
       if (ring) ring.style.strokeDashoffset = ring.dataset.targetOffset;
       container.querySelectorAll('.bd-fill').forEach(el => {
         el.style.width = el.dataset.targetWidth;
+      });
+    });
+
+    container.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.dataset.prompt === 'p1' ? PROMPT_RESUME : PROMPT_COVER;
+        copyText(text).then(() => {
+          const original = btn.textContent;
+          btn.textContent = 'Copied';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1800);
+        }).catch(() => {
+          btn.textContent = 'Press Ctrl+C to copy';
+        });
       });
     });
 
